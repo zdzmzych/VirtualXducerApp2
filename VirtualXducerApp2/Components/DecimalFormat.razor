@@ -1,0 +1,61 @@
+﻿@inherits MudComponentBase
+
+<MudStack Row=true Class="@Class">
+    <MudSwitch Class="my-3 mx-3" @bind-Value="AutoFormat"  />
+    <MudButton Class="my-3" Disabled="AutoFormat" Variant="Variant.Filled" OnClick="@Decrement" Color="Color.Primary">0.0-</MudButton>
+    <MudButton Class="my-3" Disabled="AutoFormat" Variant="Variant.Filled" OnClick="@Increment" Color="Color.Primary">0.00+</MudButton>
+</MudStack>
+
+
+@code {
+    public DecimalFormat()
+    {
+        Format = FormatValue;
+    }
+
+    public static string Auto = "G";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Format = FormatValue;
+    }
+
+    int _decimalPlace = 3;
+    bool _autoFormat = true;
+    public bool AutoFormat 
+    { 
+        get => _autoFormat; 
+        set
+        {
+            _autoFormat = value;
+            FormatChanged.InvokeAsync(FormatValue);
+        }
+    }
+
+    public string FormatValue => AutoFormat ? Auto : $"N{_decimalPlace}";
+    
+    //[Parameter]
+    public string Format { get; set; }
+
+    [Parameter]
+    public EventCallback<string> FormatChanged { get; set; }
+
+    void Increment()
+    {
+        if (_decimalPlace < 9)
+        { 
+            _decimalPlace++; 
+            FormatChanged.InvokeAsync(FormatValue);
+        }
+    }
+
+    void Decrement()
+    {
+        if (_decimalPlace > 0)
+        {
+            _decimalPlace--;
+            FormatChanged.InvokeAsync(FormatValue);
+        }
+    }
+}

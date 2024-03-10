@@ -1,0 +1,235 @@
+﻿@page "/"
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Elevation="3" Class="mx-3">
+            <DecimalFormat Class="mx-3" @bind-Format="NumberFormat" />
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Elevation="3" Class="mx-3">
+            <MudText Class="mx-3">Pressure range</MudText>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Clearable=true Immediate=true T="string" Placeholder="Start" Class="px-3" @bind-Text="PressureStartText" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Clearable=true Immediate=true T="string" Placeholder="End" Class="px-3" @bind-Text="PressureEndText" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Elevation="3" Class="mx-3">
+            <MudText Class="mx-3">Signal</MudText>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Clearable=true Immediate=true T="string" Placeholder="Start" Class="px-3" @bind-Text="SignalStartText" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Clearable=true Immediate=true T="string" Placeholder="End" Class="px-3" @bind-Text="SignalEndText" />
+                </MudItem>
+            </MudGrid>
+            <MudRadioGroup @bind-Value="@SelectedTransferFun" Class="px-3">
+                <MudRadio Value="@("Linear")" Color="Color.Primary">Linear</MudRadio>
+                <MudRadio Value="@("Sqrt")" Color="Color.Primary">Sqrt</MudRadio>
+            </MudRadioGroup>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Elevation="3" Class="mx-3">
+            <MudTextField Clearable=true Immediate=true T="string" Label="Pressure" Class="pa-3" @bind-Text="PressureText" />
+            <MudTextField Clearable=true Immediate=true T="string" Label="Signal" Class="pa-3" @bind-Text="SignalText" />
+            <MudTextField Clearable=true Immediate=true T="string" Label="Percent [%]" Class="pa-3" @bind-Text="PercentText" />
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper>
+            <MudStack>
+                <MudStack Row=true Spacing="0" Class="flex-wrap">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(0)" Class="m-2">0%</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(1)" Class="m-2">1%</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(25)" Class="m-2">25%</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(50)" Class="m-2">50%</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(75)" Class="m-2">75%</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SetUserPercent(100)" Class="m-2">100%</MudButton>
+                </MudStack>
+                <MudSlider Color="Color.Info" Size="Size.Large" Class="m-7" Min=0 Max=100 Immediate=true @bind-Value="SliderPercent" />
+            </MudStack>
+            </MudPaper>
+    </MudItem>
+
+</MudGrid>
+
+@code
+{
+    Xducer xducer = new Xducer();
+
+    string _numberFormat = DecimalFormat.Auto;
+    string NumberFormat 
+    {
+        get => _numberFormat;
+        set 
+        {
+            _numberFormat = value;   
+            _pressureStartText = xducer.RangeStart.ToString(NumberFormat);
+            _pressureEndText = xducer.RangeEnd.ToString(NumberFormat);
+            _signalStartText = xducer.SignalStart.ToString(NumberFormat);
+            _signalEndText = xducer.SignalEnd.ToString(NumberFormat);
+            _percentText = xducer.Percent.ToString(NumberFormat);
+            _pressureText = xducer.Pressure.ToString(NumberFormat);
+            _signalText = xducer.Signal.ToString(NumberFormat);
+        }
+    }
+
+    string? _selectedTransferFun;
+    string? SelectedTransferFun
+    {
+        get => _selectedTransferFun;
+        set
+        {
+            _selectedTransferFun = value;
+            xducer.Linear = _selectedTransferFun == "Linear";
+            SetUserPercent(xducer.Percent);
+        }
+    }
+
+    string? _pressureStartText;
+    string? PressureStartText
+    {
+        get => _pressureStartText;
+        set
+        {
+            _pressureStartText = value;
+            update(value, x => xducer.ChangeRangeStart(x), () => { _signalText = string.Empty; _percentText = string.Empty; _pressureText = string.Empty; });
+        }
+    }
+
+    string? _pressureEndText;
+    string? PressureEndText
+    {
+        get => _pressureEndText;
+        set
+        {
+            _pressureEndText = value;
+            update(value, x => xducer.ChangeRangeEnd(x), () => { _signalText = string.Empty; _percentText = string.Empty; _pressureText = string.Empty; });
+        }
+    }
+
+    string? _signalStartText;
+    string? SignalStartText
+    {
+        get => _signalStartText;
+        set
+        {
+            _signalStartText = value;
+            update(value, x => xducer.ChangeSignalStart(x), () => { _signalText = string.Empty; _percentText = string.Empty; _pressureText = string.Empty; });
+        }
+    }
+
+    string? _signalEndText;
+    string? SignalEndText
+    {
+        get => _signalEndText;
+        set
+        {
+            _signalEndText = value;
+            update(value, x => xducer.ChangeSignalEnd(x), () => { _signalText = string.Empty; _percentText = string.Empty; });
+        }
+    }
+
+    string? _pressureText;
+    string? PressureText
+    {
+        get => _pressureText;
+        set
+        {
+            _pressureText = value;
+            update(value, x => xducer.FromPressure(x), () => { _signalText = string.Empty; _percentText = string.Empty; });
+        }
+    }
+
+    string? _signalText;
+    string? SignalText
+    {
+        get => _signalText;
+        set
+        {
+            _signalText = value;
+            update(value, x => xducer.FromSignal(x), () => { _percentText = string.Empty; _pressureText = string.Empty; });
+        }
+    }
+
+    string? _percentText;
+    string? PercentText
+    {
+        get => _percentText;
+        set
+        {
+            _percentText = value;
+            update(value, x => xducer.FromPercent(x), () => { _signalText = string.Empty; _pressureText = string.Empty; });
+        }
+    }
+
+    public int SliderPercent 
+    {
+        get => (int)xducer.Percent;
+        set
+        {
+            xducer.FromPercent(value);    
+            _percentText = xducer.Percent.ToString(NumberFormat);
+            _pressureText = xducer.Pressure.ToString(NumberFormat);
+            _signalText = xducer.Signal.ToString(NumberFormat);
+        } 
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _pressureStartText = xducer.RangeStart.ToString(NumberFormat);
+        _pressureEndText = xducer.RangeEnd.ToString(NumberFormat);
+        _signalStartText = xducer.SignalStart.ToString(NumberFormat);
+        _signalEndText = xducer.SignalEnd.ToString(NumberFormat);
+        _selectedTransferFun = xducer.Linear ? "Linear" : "Sqrt";
+        SetUserPercent(0);
+    }
+
+    void SetUserPercent(double value)
+    {
+        xducer.FromPercent(value);
+        _percentText = xducer.Percent.ToString(NumberFormat);
+        _pressureText = xducer.Pressure.ToString(NumberFormat);
+        _signalText = xducer.Signal.ToString(NumberFormat);
+    }
+
+    void update(string? s, Action<double> action, Action invalidate)
+    {
+        if (NumberValidator.IsValid(s, out double result))
+        {
+            action(result);
+            _percentText = xducer.Percent.ToString(NumberFormat);
+            _pressureText = xducer.Pressure.ToString(NumberFormat);
+            _signalText = xducer.Signal.ToString(NumberFormat);
+        }
+        else invalidate();
+    }
+}
+
+@* <div Class="d-flex justify-space-around flex-wrap mt-4">
+    <MudBadge Content="3" Overlap="true" Class="mx-6 my-4">
+        <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Default" />
+    </MudBadge>
+    <MudBadge Content="100" Color="Color.Primary" Overlap="true" Class="mx-6 my-4">
+        <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Default" />
+    </MudBadge>
+    <MudBadge Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Overlap="true" Bordered="true" Class="mx-6 my-4">
+        <MudButton Color="Color.Error" Variant="Variant.Filled" DisableElevation="true">Security Issues</MudButton>
+    </MudBadge>
+    <MudBadge Dot="true" Color="Color.Info" Class="mx-6 my-4">
+        <MudText>Bug Reports</MudText>
+    </MudBadge>
+</div> *@

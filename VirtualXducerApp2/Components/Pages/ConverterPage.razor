@@ -1,0 +1,123 @@
+﻿@page "/converter"
+
+<MudPaper Elevation="3" Class="ma-3">
+    <DecimalFormat @bind-Format="NumberFormat" />
+</MudPaper>
+
+<MudPaper Elevation="3" Class="ma-3">
+    <MudTextField Style="font-size:large" Class="ma-3" 
+        T="string" @bind-Value="PressureText" Immediate=true Clearable=true
+                      Validation="@(new Func<string, IEnumerable<string>>(ValidateNumberInput))"/>
+    <MudSelect Class="ma-3" @bind-Value="SelectedUnit" Label="Unit">
+            @if (_units != null)
+            {
+                @foreach (PressureUnit item in _units)
+                {
+                    <MudSelectItem Value="@item">@item.Name</MudSelectItem>
+                }
+
+            }
+        </MudSelect>
+</MudPaper>
+
+@if (isvalid)
+{
+    <MudPaper Elevation="3" Class="ma-3" >
+        <MudTable Items="@_pressures" Hover="true" Breakpoint="Breakpoint.Sm" Height="calc(100vh - 305px)" FixedHeader="true" >
+            <HeaderContent>
+                <MudTh>Value</MudTh>
+                <MudTh Style="text-align:end">Unit</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Value">@context.ValueStr</MudTd>
+                    <MudTd DataLabel="Unit" Style="text-align:end">@context.UnitName</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+}
+
+@code 
+{
+        PressureViewModel[] _pressures;
+        PressureUnit[] _units;
+        Pressure? _pressure;
+        PressureUnit _selectedUnit;
+        string? _pressureText;
+        bool isvalid = true;
+
+        string _numberFormat = DecimalFormat.Auto;
+        string NumberFormat
+        {
+            get => _numberFormat;
+            set
+            {
+                _numberFormat = value;
+                Update();
+            }
+        }
+
+        private IEnumerable<string> ValidateNumberInput(string str)
+        {
+            isvalid = NumberValidator.IsValid(str, out double result);
+            if (!isvalid)
+            {
+                yield return "Number is required!";
+                yield break;
+            }
+        }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _selectedUnit = PressureUnit.kPa;
+        _pressure = new Pressure(1, _selectedUnit);
+        _pressureText = _pressure.Value.ToString();
+
+        _units = PressureUnitService.Units.OrderBy(x => x.Name).ToArray();
+        _pressures = _units.Select(u =>
+            {
+                var p = new Pressure(_pressure.Value, u);
+                p.ConvertFrom(_pressure);
+                var vm = new PressureViewModel(p);
+                vm.SetFormat(_numberFormat);
+                return vm;
+            }).ToArray();
+    }
+
+    public string? PressureText 
+    { 
+        get =>  _pressureText; 
+        set 
+        {
+            _pressureText = value;
+            if (double.TryParse(value, out double result))
+            {
+                _pressure?.SetValue(result);
+                Update();
+            }
+        }
+    }
+
+    public PressureUnit SelectedUnit
+    {
+        get => _selectedUnit;
+        set
+        {
+            _selectedUnit = value;
+            _pressure?.SetUnit(value);
+            Update();
+        }
+    }
+
+    void Update()
+    {
+        if (_pressure != null)
+        {
+            foreach (var p in _pressures)
+            {
+                p.Pressure.ConvertFrom(_pressure);
+                p.SetFormat(_numberFormat);
+            }
+        }
+    }
+}
