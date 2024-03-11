@@ -5,9 +5,7 @@
 </MudPaper>
 
 <MudPaper Elevation="3" Class="ma-3">
-    <MudTextField Style="font-size:large" Class="ma-3" 
-        T="string" @bind-Value="PressureText" Immediate=true Clearable=true
-                      Validation="@(new Func<string, IEnumerable<string>>(ValidateNumberInput))"/>
+    <MudTextField Style="font-size:large" Class="ma-3" T="string" @bind-Value="PressureText" Immediate=true Clearable=true/>
     <MudSelect Class="ma-3" @bind-Value="SelectedUnit" Label="Unit">
             @if (_units != null)
             {
@@ -38,33 +36,23 @@
 
 @code 
 {
-        PressureViewModel[] _pressures;
-        PressureUnit[] _units;
-        Pressure? _pressure;
-        PressureUnit _selectedUnit;
-        string? _pressureText;
-        bool isvalid = true;
-
-        string _numberFormat = DecimalFormat.Auto;
-        string NumberFormat
+    PressureViewModel[] _pressures;
+    PressureUnit[] _units;
+    Pressure? _pressure;
+    PressureUnit _selectedUnit;
+    string? _pressureText;
+    bool isvalid = true;
+    
+    string _numberFormat = DecimalFormat.Auto;
+    string NumberFormat
+    {
+        get => _numberFormat;
+        set
         {
-            get => _numberFormat;
-            set
-            {
-                _numberFormat = value;
-                Update();
-            }
+            _numberFormat = value;
+            Update();
         }
-
-        private IEnumerable<string> ValidateNumberInput(string str)
-        {
-            isvalid = NumberValidator.IsValid(str, out double result);
-            if (!isvalid)
-            {
-                yield return "Number is required!";
-                yield break;
-            }
-        }
+    }
 
     protected override void OnInitialized()
     {
@@ -90,7 +78,8 @@
         set 
         {
             _pressureText = value;
-            if (double.TryParse(value, out double result))
+            isvalid = NumberValidator.IsValid(value, out double result);
+            if (isvalid)
             {
                 _pressure?.SetValue(result);
                 Update();
